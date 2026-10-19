@@ -1,0 +1,14 @@
+@import 'tailwindcss';
+
+@source '../js/**/*.vue';
+
+@theme {
+    --font-sans: ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Touch terminals: no text selection or tap highlight on buttons. */
+button {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    touch-action: manipulation;
+}
