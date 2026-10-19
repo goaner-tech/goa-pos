@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\OrderLine;
+use App\Services\BillCalculator;
 use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -30,12 +31,12 @@ class OrderController extends Controller
 
         $order = $this->orders->open($request->user(), $data);
 
-        return response()->json($this->present($order), 201);
+        return response()->json(self::present($order), 201);
     }
 
     public function show(Order $order): JsonResponse
     {
-        return response()->json($this->present($order));
+        return response()->json(self::present($order));
     }
 
     public function addLine(Request $request, Order $order): JsonResponse
@@ -55,7 +56,7 @@ class OrderController extends Controller
         $item = MenuItem::findOrFail($data['menu_item_id']);
         $this->orders->addLine($order, $item, $data, $data['modifier_ids'] ?? []);
 
-        return response()->json($this->present($order), 201);
+        return response()->json(self::present($order), 201);
     }
 
     public function fire(Request $request, Order $order): JsonResponse
@@ -65,7 +66,7 @@ class OrderController extends Controller
         $data = $request->validate(['course' => ['nullable', 'integer', 'min:1', 'max:5']]);
         $tickets = $this->orders->fire($order, $data['course'] ?? null);
 
-        return response()->json(['tickets' => $tickets, 'order' => $this->present($order)]);
+        return response()->json(['tickets' => $tickets, 'order' => self::present($order)]);
     }
 
     public function voidLine(Request $request, OrderLine $line): JsonResponse
@@ -75,14 +76,14 @@ class OrderController extends Controller
         $data = $request->validate(['reason' => ['nullable', 'string', 'max:200']]);
         $this->orders->voidLine($line, $request->user(), $data['reason'] ?? null);
 
-        return response()->json($this->present($line->order));
+        return response()->json(self::present($line->order));
     }
 
-    private function present(Order $order): array
+    public static function present(Order $order): array
     {
-        $order->load(['lines' => fn ($q) => $q->orderBy('course')->orderBy('id'), 'diningTable', 'employee:id,name']);
+        $order->load(['lines' => fn ($q) => $q->orderBy('course')->orderBy('id'), 'payments', 'diningTable', 'employee:id,name']);
 
-        return $order->toArray();
+        return [...$order->toArray(), 'bill' => app(BillCalculator::class)->for($order)];
     }
 
     private function ensureCanTakeOrders(Request $request): void

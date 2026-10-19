@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
-use App\Enums\LineStatus;
 use App\Enums\OrderStatus;
 use App\Enums\ServiceType;
+use App\Services\BillCalculator;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['service_type', 'dining_table_id', 'tab_name', 'customer_name', 'guest_count', 'status', 'employee_id', 'closed_at'])]
+#[Fillable(['service_type', 'dining_table_id', 'tab_name', 'customer_name', 'guest_count', 'status', 'employee_id', 'subtotal', 'tax', 'service_charge', 'closed_at', 'closed_by'])]
 class Order extends Model
 {
     protected $appends = ['label', 'total'];
@@ -32,6 +32,11 @@ class Order extends Model
     public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
     }
 
     public function diningTable(): BelongsTo
@@ -61,10 +66,11 @@ class Order extends Model
         };
     }
 
+    /**
+     * What the guest owes in total, including service charge and any tax added on top.
+     */
     public function getTotalAttribute(): int
     {
-        return $this->lines
-            ->where('status', '!=', LineStatus::Voided)
-            ->sum(fn (OrderLine $line) => $line->lineTotal());
+        return app(BillCalculator::class)->for($this)['total'];
     }
 }
