@@ -14,7 +14,17 @@ Stack: Laravel 13 (API, Sanctum tokens, SQLite) and a Vue 3 touch interface buil
 - **Voids:** unsent items can be removed by anyone; items already sent need a manager and a reason. Every void and menu change goes to the audit log.
 - Prices are stored as integer piasters (1 SSP = 100) and copied onto each order line when sold.
 
-Not yet built: payments (SSP and USD cash, mobile money), bills and receipts, end-of-day reports, inventory, cloud sync.
+## Phase 2
+
+- **Payments:** SSP cash, US dollar cash at a manager-set rate (change always given in SSP), mobile money and card with a transaction reference. Bills can be split across several payments, with tips.
+- **Bills:** optional service charge and tax, either included in menu prices or added on top, all set from the Manager screen. Bills and receipts print on 80 mm paper from the browser.
+- **Closing:** an order closes when fully paid; anything unsent goes to its station then, so pay-first counter orders reach the barista.
+- **Cash drawer:** open with an SSP and USD float; a manager counts up and sees how much the drawer is over or short.
+- **End-of-day report:** bills, sales, service charge, tax, tips, totals per payment type, voids and top items, using South Sudan time.
+
+The tax rate defaults to 0% until a manager sets it; confirm the current rate and receipt rules with an accountant.
+
+Not yet built: refunds, inventory, cloud sync and backup.
 
 ## Run it
 

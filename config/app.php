@@ -65,7 +65,8 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    // South Sudan time, so the end-of-day report covers the venue's own day.
+    'timezone' => env('APP_TIMEZONE', 'Africa/Juba'),
 
     /*
     |--------------------------------------------------------------------------

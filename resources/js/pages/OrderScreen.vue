@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 import { api, session } from '../api';
 import { money, setCurrency } from '../money';
 import ModifierPicker from '../components/ModifierPicker.vue';
+import PayPanel from '../components/PayPanel.vue';
 
 const props = defineProps({ id: { type: String, required: true } });
 
@@ -11,11 +12,13 @@ const categories = ref([]);
 const activeCategory = ref(null);
 const course = ref(1);
 const picking = ref(null);
+const paying = ref(false);
 const error = ref('');
 const flash = ref('');
 
 const items = computed(() => categories.value.find((c) => c.id === activeCategory.value)?.items ?? []);
 const liveLines = computed(() => order.value?.lines.filter((l) => l.status !== 'voided') ?? []);
+const isOpen = computed(() => order.value?.status === 'open');
 const unsentCourses = computed(() => [...new Set(liveLines.value.filter((l) => l.status === 'new').map((l) => l.course))].sort());
 
 const statusStyle = {
@@ -43,7 +46,7 @@ onMounted(() => run(async () => {
 }));
 
 function tapItem(item) {
-    if (item.sold_out) return;
+    if (item.sold_out || !isOpen.value) return;
     if (item.modifier_groups.length) picking.value = item;
     else addLine(item, {});
 }
@@ -138,23 +141,33 @@ function modifierText(line) {
                     </div>
                     <div class="text-right">
                         <div>{{ money(line.quantity * line.unit_price) }}</div>
-                        <button v-if="line.status !== 'voided'" class="text-xs text-red-600" @click="voidLine(line)">Void</button>
+                        <button v-if="line.status !== 'voided' && isOpen" class="text-xs text-red-600" @click="voidLine(line)">Void</button>
                     </div>
                 </li>
                 <li v-if="!order.lines.length" class="py-8 text-center text-slate-400">Tap items to add them.</li>
             </ul>
             <div class="space-y-2 border-t p-4">
-                <div class="flex justify-between text-lg font-semibold"><span>Total</span><span>{{ money(order.total) }}</span></div>
-                <div v-if="unsentCourses.length > 1" class="flex gap-2">
+                <div class="flex justify-between text-lg font-semibold"><span>Total</span><span>{{ money(order.bill.total) }}</span></div>
+                <div v-if="order.bill.paid" class="flex justify-between text-sm text-emerald-700"><span>Paid</span><span>{{ money(order.bill.paid) }}</span></div>
+                <div v-if="unsentCourses.length > 1 && isOpen" class="flex gap-2">
                     <button v-for="c in unsentCourses" :key="c" @click="fire(c)"
                         class="h-11 flex-1 rounded-xl bg-sky-100 font-medium text-sky-900">Send course {{ c }}</button>
                 </div>
-                <button @click="fire(null)" :disabled="!unsentCourses.length"
-                    class="h-14 w-full rounded-xl bg-emerald-600 text-lg font-semibold text-white disabled:opacity-40">Send all</button>
-                <p class="text-center text-xs text-slate-400">Payment and closing the bill come in the next phase.</p>
+                <div v-if="isOpen" class="flex gap-2">
+                    <button @click="fire(null)" :disabled="!unsentCourses.length"
+                        class="h-14 flex-1 rounded-xl bg-sky-600 text-lg font-semibold text-white disabled:opacity-40">Send all</button>
+                    <button @click="paying = true" :disabled="!order.bill.total"
+                        class="h-14 flex-1 rounded-xl bg-emerald-600 text-lg font-semibold text-white disabled:opacity-40">Pay</button>
+                </div>
+                <div v-else class="flex gap-2">
+                    <span class="flex-1 rounded-xl bg-slate-100 py-3 text-center font-semibold capitalize">{{ order.status }}</span>
+                    <RouterLink :to="`/orders/${order.id}/receipt`" class="flex-1 rounded-xl bg-slate-900 py-3 text-center font-semibold text-white">Receipt</RouterLink>
+                </div>
+                <RouterLink v-if="isOpen && order.lines.length" :to="`/orders/${order.id}/receipt`" class="block text-center text-sm text-sky-700">Print bill</RouterLink>
             </div>
         </aside>
 
+        <PayPanel v-if="paying" :order="order" @paid="(o) => (order = o)" @close="paying = false" />
         <ModifierPicker v-if="picking" :item="picking" @cancel="picking = null" @add="(extra) => addLine(picking, extra)" />
     </div>
     <p v-else-if="error" class="p-6 text-red-700">{{ error }}</p>
