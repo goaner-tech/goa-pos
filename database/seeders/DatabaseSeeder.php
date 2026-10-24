@@ -50,6 +50,10 @@ class DatabaseSeeder extends Seeder
                 ['Chicken stew', 1800000, [$sides]],
                 ['Ful medames', 900000, []],
                 ['Vegetable samosa (3)', 600000, []],
+                ['Goat meat stew', 2000000, [$sides]],
+                ['Beef kebab skewers', 1600000, [$sides]],
+                ['Okra stew with kisra', 1200000, []],
+                ['Chapati (2)', 300000, []],
             ]],
             ['Bar', Station::Bar, [
                 ['White Bull lager', 500000, []],
@@ -57,12 +61,18 @@ class DatabaseSeeder extends Seeder
                 ['House red wine (glass)', 1200000, []],
                 ['Whisky', 1000000, [$mixer]],
                 ['Gin', 900000, [$mixer]],
+                ['Tusker lager', 550000, []],
+                ['Vodka', 900000, [$mixer]],
+                ['Coca-Cola (bottle)', 300000, []],
             ]],
             ['Coffee & juice', Station::Barista, [
                 ['Espresso', 400000, [$extras]],
                 ['Cappuccino', 600000, [$size, $milk, $extras]],
                 ['Spiced tea', 300000, [$size]],
                 ['Fresh mango juice', 500000, [$size]],
+                ['Jebena coffee', 400000, [$extras]],
+                ['Fresh passion juice', 500000, [$size]],
+                ['Mandazi (3)', 300000, []],
             ]],
         ];
 
